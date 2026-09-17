@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { loginUser } from '@/services/api/authApi';
+import GoogleLoginButton from '@/components/GoogleLoginButton';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -36,6 +37,16 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleLoginSuccess = (res) => {
+    const storage = rememberMe ? localStorage : sessionStorage;
+    (rememberMe ? sessionStorage : localStorage).removeItem('token');
+    (rememberMe ? sessionStorage : localStorage).removeItem('user');
+
+    storage.setItem('token', res.token);
+    storage.setItem('user', JSON.stringify(res.user));
+    navigate('/profile');
   };
 
   return (
@@ -118,6 +129,21 @@ export default function Login() {
               </button>
             </div>
           </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Hoặc tiếp tục với</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <GoogleLoginButton onLoginSuccess={handleGoogleLoginSuccess} />
+            </div>
+          </div>
 
           <div className="mt-6">
             <div className="relative">

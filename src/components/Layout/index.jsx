@@ -85,8 +85,14 @@ export default function Layout() {
             </div>
             
             <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600 mr-2 bg-gray-100 px-3 py-1.5 rounded-full">
-                <User size={16} />
+              <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600 mr-2 bg-gray-100 pl-1.5 pr-3 py-1.5 rounded-full">
+                {user?.avatar && user.avatar !== 'default.jpg' ? (
+                  <img src={user.avatar} alt={user?.name} className="w-6 h-6 rounded-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
+                    <User size={14} className="text-gray-500" />
+                  </div>
+                )}
                 <span className="font-medium text-gray-900">{user?.name || 'User'}</span>
               </div>
               <button

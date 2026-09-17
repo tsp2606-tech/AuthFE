@@ -18,6 +18,11 @@ export const loginUser = async (data) => {
   return response.data;
 };
 
+export const googleLogin = async (idToken) => {
+  const response = await api.post('/google-login', { idToken });
+  return response.data;
+};
+
 export const getMe = async () => {
   const response = await api.get('/me');
   return response.data;
