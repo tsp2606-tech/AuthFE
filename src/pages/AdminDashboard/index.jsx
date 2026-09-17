@@ -42,6 +42,9 @@ export default function AdminDashboard() {
       fetchDashboardData(); // Refresh list
     } catch (error) {
       toast.error(error.response?.data?.message || 'Không thể đổi quyền');
+      if (error.response?.status === 403) {
+        navigate('/profile');
+      }
     }
   };
 
