@@ -1,16 +1,52 @@
+import { useState, useEffect } from 'react';
 import { Users, Shield, ShieldCheck, ShieldOff } from 'lucide-react';
+import { toast } from 'sonner';
+import { getAdminDashboard, changeRole } from '@/services/api/authApi';
 
 export default function AdminDashboard() {
-  const users = [
-    { _id: '1', name: 'Nguyễn Văn A', email: 'nva@gmail.com', role: 'admin' },
-    { _id: '2', name: 'Trần Thị B', email: 'ttb@gmail.com', role: 'user' },
-    { _id: '3', name: 'Lê Văn C', email: 'lvc@gmail.com', role: 'user' },
-  ];
+  const [users, setUsers] = useState([]);
+  const [stats, setStats] = useState({ totalUsers: 0, adminCount: 0, userCount: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const handleRoleChange = (userId, currentRole) => {
-    // Logic update role
-    console.log('Change role for', userId, 'from', currentRole);
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const res = await getAdminDashboard();
+      setUsers(res.users);
+      setStats({
+        totalUsers: res.totalUsers,
+        adminCount: res.adminCount,
+        userCount: res.userCount
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Lỗi khi tải dữ liệu Admin');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const handleRoleChange = async (userId, currentRole) => {
+    try {
+      const newRole = currentRole === 'admin' ? 'user' : 'admin';
+      await changeRole(userId, newRole);
+      toast.success('Đổi quyền thành công');
+      fetchDashboardData(); // Refresh list
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Không thể đổi quyền');
+    }
+  };
+
+  if (loading && users.length === 0) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -21,7 +57,7 @@ export default function AdminDashboard() {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Tổng số Users</p>
-            <p className="text-2xl font-bold text-gray-900">10</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
           </div>
         </div>
         
@@ -31,7 +67,7 @@ export default function AdminDashboard() {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Số Admin</p>
-            <p className="text-2xl font-bold text-gray-900">2</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.adminCount}</p>
           </div>
         </div>
 
@@ -41,7 +77,7 @@ export default function AdminDashboard() {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Số User thường</p>
-            <p className="text-2xl font-bold text-gray-900">8</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.userCount}</p>
           </div>
         </div>
       </div>
@@ -59,6 +95,7 @@ export default function AdminDashboard() {
               <tr className="bg-white border-b border-gray-200">
                 <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Họ và tên</th>
                 <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Mật khẩu (Hash)</th>
                 <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quyền</th>
                 <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Thao tác</th>
               </tr>
@@ -71,6 +108,11 @@ export default function AdminDashboard() {
                   </td>
                   <td className="py-4 px-6">
                     <div className="text-sm text-gray-500">{user.email}</div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <div className="text-sm font-mono text-gray-500 truncate max-w-[120px]" title={user.password}>
+                      {user.password || '---'}
+                    </div>
                   </td>
                   <td className="py-4 px-6">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

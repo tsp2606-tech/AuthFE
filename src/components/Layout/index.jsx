@@ -1,15 +1,48 @@
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { LogOut, User, ShieldAlert } from 'lucide-react';
+import { toast } from 'sonner';
+import { getMe, logoutUser } from '@/services/api/authApi';
 
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleLogout = () => {
-    // Gọi api logout, xóa token...
-    navigate('/login');
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await getMe();
+        setUser(res.user);
+      } catch (error) {
+        toast.error('Vui lòng đăng nhập lại.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/login');
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi đăng xuất');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -34,23 +67,25 @@ export default function Layout() {
                 >
                   Profile
                 </Link>
-                <Link
-                  to="/admin"
-                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
-                    currentPath === '/admin'
-                      ? 'border-blue-500 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                  }`}
-                >
-                  Admin Dashboard
-                </Link>
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
+                      currentPath === '/admin'
+                        ? 'border-blue-500 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    }`}
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
               </div>
             </div>
             
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600 mr-2 bg-gray-100 px-3 py-1.5 rounded-full">
                 <User size={16} />
-                <span className="font-medium text-gray-900">User</span>
+                <span className="font-medium text-gray-900">{user?.name || 'User'}</span>
               </div>
               <button
                 onClick={handleLogout}

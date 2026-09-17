@@ -1,12 +1,33 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, UserPlus, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
+import { registerUser } from '@/services/api/authApi';
 
 export default function Register() {
   const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/login');
+    if (!name || !email || !password) {
+      toast.error('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await registerUser({ name, email, password });
+      toast.success(res.message || 'Đăng ký thành công! Vui lòng đăng nhập.');
+      navigate('/login');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,6 +59,8 @@ export default function Register() {
                 </div>
                 <input
                   type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border"
                   placeholder="Nguyễn Văn A"
                 />
@@ -54,6 +77,8 @@ export default function Register() {
                 </div>
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border"
                   placeholder="name@example.com"
                 />
@@ -70,6 +95,8 @@ export default function Register() {
                 </div>
                 <input
                   type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border"
                   placeholder="••••••••"
                 />
@@ -79,9 +106,10 @@ export default function Register() {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                disabled={loading}
+                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-70"
               >
-                Đăng ký
+                {loading ? 'Đang xử lý...' : 'Đăng ký'}
                 <ArrowRight size={16} />
               </button>
             </div>
