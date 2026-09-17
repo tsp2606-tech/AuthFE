@@ -12,7 +12,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
+    const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (userData) {
       setUser(JSON.parse(userData));
     }

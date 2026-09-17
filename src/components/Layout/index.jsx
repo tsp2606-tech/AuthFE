@@ -30,6 +30,8 @@ export default function Layout() {
       await logoutUser();
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       navigate('/login');
     } catch (error) {
       toast.error('Có lỗi xảy ra khi đăng xuất');

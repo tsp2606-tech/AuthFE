@@ -8,6 +8,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -21,8 +22,14 @@ export default function Login() {
       setLoading(true);
       const res = await loginUser({ email, password });
       toast.success(res.message || 'Đăng nhập thành công!');
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('user', JSON.stringify(res.user));
+      
+      const storage = rememberMe ? localStorage : sessionStorage;
+      // Xóa ở storage kia phòng trường hợp trước đó đã lưu
+      (rememberMe ? sessionStorage : localStorage).removeItem('token');
+      (rememberMe ? sessionStorage : localStorage).removeItem('user');
+
+      storage.setItem('token', res.token);
+      storage.setItem('user', JSON.stringify(res.user));
       navigate('/profile');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
@@ -84,6 +91,20 @@ export default function Login() {
                   placeholder="••••••••"
                 />
               </div>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 cursor-pointer">
+                Ghi nhớ đăng nhập
+              </label>
             </div>
 
             <div>
