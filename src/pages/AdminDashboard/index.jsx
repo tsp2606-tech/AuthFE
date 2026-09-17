@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Users, Shield, ShieldCheck, ShieldOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAdminDashboard, changeRole } from '@/services/api/authApi';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({ totalUsers: 0, adminCount: 0, userCount: 0 });
   const [loading, setLoading] = useState(true);
@@ -19,7 +21,10 @@ export default function AdminDashboard() {
         userCount: res.userCount
       });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi khi tải dữ liệu Admin');
+      toast.error(error.response?.data?.message || 'Không có quyền truy cập');
+      if (error.response?.status === 403) {
+        navigate('/profile');
+      }
     } finally {
       setLoading(false);
     }
