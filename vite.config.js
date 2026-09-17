@@ -8,12 +8,23 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  //kết nối với api local
+  // proxy cho backend server
+  server: {
+    port: 3000,
+    //proxy cho backend server
+    proxy: {
+      //proxy all requests starting with /api to backend server
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {
-    port: 3000,
-  }
 })
