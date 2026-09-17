@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://authapi-production.up.railway.app/api/auth' : '/api/auth'),
+  // THAY LINK RENDER CỦA BẠN VÀO DÒNG BÊN DƯỚI NẾU CHƯA DÙNG VITE_API_URL
+  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://authapi-oimn.onrender.com' : '/api/auth'),
   headers: {
     'Content-Type': 'application/json',
   },
