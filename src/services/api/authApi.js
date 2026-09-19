@@ -51,3 +51,18 @@ export const changeRole = async (id, role) => {
   const response = await api.patch(`/${id}/role`, { role });
   return response.data;
 };
+
+export const forgotPassword = async (email) => {
+  const response = await api.post('/forgot-password', { email });
+  return response.data;
+};
+
+export const resetPassword = async ({ token, newPassword }) => {
+  const payload = {
+    token,
+    newPassword: hashPassword(newPassword),
+  };
+  const response = await api.post('/reset-password', payload);
+  return response.data;
+};
+
