@@ -27,7 +27,13 @@ export default function GoogleLoginButton({ onLoginSuccess }) {
       }
     } catch (error) {
       console.error("Lỗi Google Sign-In:", error);
-      toast.error(error.response?.data?.message || error.message || "Đăng nhập Google thất bại");
+      if (error.code === "auth/popup-blocked") {
+        toast.error("Trình duyệt đã chặn Pop-up! Vui lòng cho phép pop-up trên thanh địa chỉ.");
+      } else if (error.code === "auth/popup-closed-by-user") {
+        toast.info("Bạn đã đóng cửa sổ đăng nhập Google.");
+      } else {
+        toast.error(error.response?.data?.message || error.message || "Đăng nhập Google thất bại");
+      }
     } finally {
       setLoading(false);
     }
