@@ -52,6 +52,11 @@ export const changeRole = async (id, role) => {
   return response.data;
 };
 
+export const deleteUser = async (id) => {
+  const response = await api.delete(`/${id}`);
+  return response.data;
+};
+
 export const forgotPassword = async (email) => {
   const response = await api.post('/forgot-password', { email });
   return response.data;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Users, Shield, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Users, Shield, ShieldCheck, ShieldOff, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAdminDashboard, changeRole } from '@/services/api/authApi';
+import { getAdminDashboard, changeRole, deleteUser } from '@/services/api/authApi';
 import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
@@ -9,16 +9,28 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({ totalUsers: 0, adminCount: 0, userCount: 0 });
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const getCurrentUser = () => {
+    try {
+      const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+  const currentUser = getCurrentUser();
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       const res = await getAdminDashboard();
-      setUsers(res.users);
+      setUsers(res.users || []);
+      // Đọc đúng từ res.stats theo đặc tả API
       setStats({
-        totalUsers: res.totalUsers,
-        adminCount: res.adminCount,
-        userCount: res.userCount
+        totalUsers: res.stats?.totalUsers ?? res.totalUsers ?? 0,
+        adminCount: res.stats?.adminCount ?? res.adminCount ?? 0,
+        userCount: res.stats?.userCount ?? res.userCount ?? 0,
       });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Không có quyền truy cập');
@@ -45,6 +57,24 @@ export default function AdminDashboard() {
       if (error.response?.status === 403) {
         navigate('/profile');
       }
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    const isConfirmed = window.confirm(
+      `Bạn có chắc chắn muốn xóa người dùng "${user.name}" (${user.email}) không? Hành động này không thể hoàn tác.`
+    );
+    if (!isConfirmed) return;
+
+    try {
+      setDeletingId(user._id);
+      await deleteUser(user._id);
+      toast.success('Xóa người dùng thành công');
+      fetchDashboardData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Không thể xóa người dùng');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -103,7 +133,6 @@ export default function AdminDashboard() {
               <tr className="bg-white border-b border-gray-200">
                 <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Họ và tên</th>
                 <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Mật khẩu (Hash)</th>
                 <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quyền</th>
                 <th className="py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Thao tác</th>
               </tr>
@@ -118,11 +147,6 @@ export default function AdminDashboard() {
                     <div className="text-sm text-gray-500">{user.email}</div>
                   </td>
                   <td className="py-4 px-6">
-                    <div className="text-sm font-mono text-gray-500 truncate max-w-[120px]" title={user.password}>
-                      {user.password || '---'}
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       user.role === 'admin' 
                         ? 'bg-purple-100 text-purple-800' 
@@ -132,23 +156,54 @@ export default function AdminDashboard() {
                     </span>
                   </td>
                   <td className="py-4 px-6 text-right">
-                    {user.role === 'admin' ? (
+                    <div className="flex items-center justify-end gap-2">
+                      {user.role === 'admin' ? (
+                        <button
+                          onClick={() => handleRoleChange(user._id, user.role)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg text-sm font-medium transition-colors"
+                          title="Hạ cấp xuống User"
+                        >
+                          <ShieldOff size={14} />
+                          Hạ cấp User
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleRoleChange(user._id, user.role)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-purple-200 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg text-sm font-medium transition-colors"
+                          title="Cấp quyền Admin"
+                        >
+                          <ShieldCheck size={14} />
+                          Cấp Admin
+                        </button>
+                      )}
+
                       <button
-                        onClick={() => handleRoleChange(user._id, user.role)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
+                        onClick={() => handleDeleteUser(user)}
+                        disabled={
+                          deletingId === user._id ||
+                          (currentUser && (currentUser._id === user._id || currentUser.id === user._id))
+                        }
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-sm font-medium transition-colors ${
+                          currentUser && (currentUser._id === user._id || currentUser.id === user._id)
+                            ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
+                            : deletingId === user._id
+                            ? 'border-red-200 text-red-400 bg-red-50 cursor-wait'
+                            : 'border-red-200 text-red-600 bg-red-50 hover:bg-red-100'
+                        }`}
+                        title={
+                          currentUser && (currentUser._id === user._id || currentUser.id === user._id)
+                            ? 'Không thể tự xóa tài khoản của chính mình'
+                            : 'Xóa người dùng'
+                        }
                       >
-                        <ShieldOff size={14} />
-                        Hạ cấp User
+                        {deletingId === user._id ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={14} />
+                        )}
+                        {deletingId === user._id ? 'Đang xóa...' : 'Xóa'}
                       </button>
-                    ) : (
-                      <button
-                        onClick={() => handleRoleChange(user._id, user.role)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-purple-200 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        <ShieldCheck size={14} />
-                        Cấp Admin
-                      </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}

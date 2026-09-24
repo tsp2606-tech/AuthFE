@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Shield, Lock, KeyRound } from 'lucide-react';
+import { User, Mail, Shield, Lock, KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { changePassword } from '@/services/api/authApi';
+import { getMe, changePassword } from '@/services/api/authApi';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
@@ -9,14 +9,34 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetchingUser, setFetchingUser] = useState(true);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
+    // Luôn gọi GET /me để đồng bộ dữ liệu mới nhất
+    const fetchUserProfile = async () => {
+      try {
+        setFetchingUser(true);
+        const res = await getMe();
+        if (res?.user) {
+          setUser(res.user);
+          const storage = localStorage.getItem('token') ? localStorage : sessionStorage;
+          storage.setItem('user', JSON.stringify(res.user));
+        }
+      } catch (error) {
+        toast.error('Không thể tải thông tin mới nhất. Vui lòng thử lại.');
+        if (error.response?.status === 401) {
+          navigate('/login');
+        }
+      } finally {
+        setFetchingUser(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,6 +61,17 @@ export default function Profile() {
       setLoading(false);
     }
   };
+
+  if (fetchingUser && !user) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="flex items-center gap-2 text-gray-500 font-medium">
+          <Loader2 className="animate-spin text-blue-600" size={24} />
+          Đang tải thông tin cá nhân...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -121,12 +152,20 @@ export default function Profile() {
                     <Lock className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    type="password"
+                    type={showOldPassword ? 'text' : 'password'}
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
-                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border"
+                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border"
                     placeholder="••••••••"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                    tabIndex={-1}
+                  >
+                    {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
               <div>
@@ -136,12 +175,20 @@ export default function Profile() {
                     <KeyRound className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    type="password"
+                    type={showNewPassword ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border"
+                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border"
                     placeholder="Mật khẩu mới (>= 6 ký tự)"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                    tabIndex={-1}
+                  >
+                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
               <div className="pt-2">

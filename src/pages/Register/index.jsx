@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, UserPlus, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, UserPlus, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { registerUser } from '@/services/api/authApi';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
@@ -10,13 +10,29 @@ export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
+  const isPasswordMismatch = Boolean(confirmPassword && password !== confirmPassword);
+  const isPasswordTooShort = Boolean(password && password.length < 6);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       toast.error('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error('Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error('Mật khẩu xác nhận không khớp');
       return;
     }
 
@@ -33,8 +49,6 @@ export default function Register() {
   };
 
   const handleGoogleLoginSuccess = (res) => {
-    // Google Register is essentially Google Login
-    // Save token logic
     const storage = rememberMe ? localStorage : sessionStorage;
     (rememberMe ? sessionStorage : localStorage).removeItem('token');
     (rememberMe ? sessionStorage : localStorage).removeItem('user');
@@ -43,6 +57,8 @@ export default function Register() {
     storage.setItem('user', JSON.stringify(res.user));
     navigate('/profile');
   };
+
+  const isSubmitDisabled = loading || !name || !email || password.length < 6 || password !== confirmPassword;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -108,20 +124,64 @@ export default function Register() {
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border"
+                  className={`focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm rounded-lg py-2.5 border ${
+                    isPasswordTooShort ? 'border-amber-300' : 'border-gray-300'
+                  }`}
+                  placeholder="•••••••• (Tối thiểu 6 ký tự)"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {isPasswordTooShort && (
+                <p className="mt-1 text-xs text-amber-600">Mật khẩu phải có ít nhất 6 ký tự</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Xác nhận mật khẩu
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={`focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm rounded-lg py-2.5 border ${
+                    isPasswordMismatch ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
+              {isPasswordMismatch && (
+                <p className="mt-1 text-xs text-red-600">Mật khẩu xác nhận không khớp</p>
+              )}
             </div>
 
             <div>
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-70"
+                disabled={isSubmitDisabled}
+                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Đang xử lý...' : 'Đăng ký'}
                 <ArrowRight size={16} />

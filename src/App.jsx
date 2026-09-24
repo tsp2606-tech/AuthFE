@@ -9,6 +9,7 @@ import ResetPassword from '@/pages/ResetPassword';
 import Profile from '@/pages/Profile';
 import AdminDashboard from '@/pages/AdminDashboard';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import AdminRoute from '@/components/AdminRoute';
 
 function App() {
   return (
@@ -24,7 +25,9 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<Navigate to="/profile" replace />} />
               <Route path="profile" element={<Profile />} />
-              <Route path="admin" element={<AdminDashboard />} />
+              <Route element={<AdminRoute />}>
+                <Route path="admin" element={<AdminDashboard />} />
+              </Route>
             </Route>
           </Route>
         </Routes>
