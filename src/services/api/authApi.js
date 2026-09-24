@@ -1,20 +1,12 @@
-import api from './index';
-import CryptoJS from 'crypto-js';
-
-// Hàm helper mã hóa password thành hash SHA256 trước khi gửi đi
-const hashPassword = (password) => {
-  return CryptoJS.SHA256(password).toString();
-};
+import api from './index.js';
 
 export const registerUser = async (data) => {
-  const payload = { ...data, password: hashPassword(data.password) };
-  const response = await api.post('/register', payload);
+  const response = await api.post('/register', data);
   return response.data;
 };
 
 export const loginUser = async (data) => {
-  const payload = { ...data, password: hashPassword(data.password) };
-  const response = await api.post('/login', payload);
+  const response = await api.post('/login', data);
   return response.data;
 };
 
@@ -29,11 +21,7 @@ export const getMe = async () => {
 };
 
 export const changePassword = async (data) => {
-  const payload = { 
-    oldPassword: hashPassword(data.oldPassword), 
-    newPassword: hashPassword(data.newPassword) 
-  };
-  const response = await api.put('/change-password', payload);
+  const response = await api.put('/change-password', data);
   return response.data;
 };
 
@@ -63,11 +51,6 @@ export const forgotPassword = async (email) => {
 };
 
 export const resetPassword = async ({ token, newPassword }) => {
-  const payload = {
-    token,
-    newPassword: hashPassword(newPassword),
-  };
-  const response = await api.post('/reset-password', payload);
+  const response = await api.post('/reset-password', { token, newPassword });
   return response.data;
 };
-

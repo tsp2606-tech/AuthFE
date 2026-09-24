@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Shield, Lock, KeyRound, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { User, Mail, Shield, Lock, KeyRound, Eye, EyeOff, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMe, changePassword } from '@/services/api/authApi';
 import { useNavigate } from 'react-router-dom';
+import UserAvatar from '@/components/UserAvatar';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState('');
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showSamePasswordDialog, setShowSamePasswordDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchingUser, setFetchingUser] = useState(true);
 
@@ -44,6 +46,13 @@ export default function Profile() {
       toast.error('Vui lòng nhập đầy đủ mật khẩu cũ và mới');
       return;
     }
+
+    if (oldPassword === newPassword) {
+      setShowSamePasswordDialog(true);
+      toast.error('Mật khẩu mới và mật khẩu cũ không được trùng nhau');
+      return;
+    }
+
     if (newPassword.length < 6) {
       toast.error('Mật khẩu mới phải từ 6 ký tự trở lên');
       return;
@@ -56,7 +65,11 @@ export default function Profile() {
       setOldPassword('');
       setNewPassword('');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Đổi mật khẩu thất bại');
+      const errorMsg = error.response?.data?.message || 'Đổi mật khẩu thất bại';
+      if (errorMsg.includes('không được trùng')) {
+        setShowSamePasswordDialog(true);
+      }
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -84,11 +97,10 @@ export default function Profile() {
         </div>
         <div className="p-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8">
-            <img 
-              src={user?.avatar || 'https://via.placeholder.com/150'} 
-              alt={user?.name}
-              className="w-24 h-24 rounded-full object-cover border-4 border-gray-50 shadow-sm"
-              onError={(e) => { e.target.src = 'https://via.placeholder.com/150'; }}
+            <UserAvatar 
+              user={user} 
+              size="xl" 
+              className="border-4 border-gray-50 shadow-sm" 
             />
             <div className="text-center sm:text-left flex-1">
               <h4 className="text-2xl font-bold text-gray-900">{user?.name || '---'}</h4>
@@ -201,6 +213,25 @@ export default function Profile() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showSamePasswordDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-600">
+              <AlertTriangle size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Thông báo</h3>
+            <p className="text-sm text-gray-600 mb-6">Mật khẩu mới và mật khẩu cũ không được trùng nhau</p>
+            <button
+              type="button"
+              onClick={() => setShowSamePasswordDialog(false)}
+              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+            >
+              Đồng ý
+            </button>
           </div>
         </div>
       )}

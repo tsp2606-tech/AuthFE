@@ -16,6 +16,8 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
+  const EMAIL_DOT_COM_REGEX = /^[^\s@]+@[a-zA-Z0-9]+([.-][a-zA-Z0-9]+)*\.com$/i;
+  const isEmailInvalid = Boolean(email && !EMAIL_DOT_COM_REGEX.test(email.trim()));
   const isPasswordMismatch = Boolean(confirmPassword && password !== confirmPassword);
   const isPasswordTooShort = Boolean(password && password.length < 6);
 
@@ -23,6 +25,11 @@ export default function Register() {
     e.preventDefault();
     if (!name || !email || !password || !confirmPassword) {
       toast.error('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+
+    if (!EMAIL_DOT_COM_REGEX.test(email.trim())) {
+      toast.error('Email phải có đuôi @*.com (ví dụ: name@example.com)');
       return;
     }
 
@@ -58,7 +65,7 @@ export default function Register() {
     navigate('/profile');
   };
 
-  const isSubmitDisabled = loading || !name || !email || password.length < 6 || password !== confirmPassword;
+  const isSubmitDisabled = loading || !name || !email || isEmailInvalid || password.length < 6 || password !== confirmPassword;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -109,10 +116,17 @@ export default function Register() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-2.5 border"
+                  className={`focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm rounded-lg py-2.5 border ${
+                    isEmailInvalid ? 'border-amber-300' : 'border-gray-300'
+                  }`}
                   placeholder="name@example.com"
                 />
               </div>
+              {isEmailInvalid && (
+                <p className="mt-1 text-xs text-amber-600">
+                  Email phải có đuôi @*.com (ví dụ: name@example.com)
+                </p>
+              )}
             </div>
 
             <div>

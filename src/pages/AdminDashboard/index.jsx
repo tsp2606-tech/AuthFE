@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Users, Shield, ShieldCheck, ShieldOff, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAdminDashboard, changeRole, deleteUser } from '@/services/api/authApi';
 import { useNavigate } from 'react-router-dom';
+import UserAvatar from '@/components/UserAvatar';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -21,9 +22,8 @@ export default function AdminDashboard() {
   };
   const currentUser = getCurrentUser();
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
-      setLoading(true);
       const res = await getAdminDashboard();
       setUsers(res.users || []);
       // Đọc đúng từ res.stats theo đặc tả API
@@ -40,11 +40,12 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   const handleRoleChange = async (userId, currentRole) => {
     try {
@@ -141,7 +142,10 @@ export default function AdminDashboard() {
               {users.map((user) => (
                 <tr key={user._id} className="hover:bg-gray-50 transition-colors">
                   <td className="py-4 px-6">
-                    <div className="font-medium text-gray-900">{user.name}</div>
+                    <div className="flex items-center gap-3">
+                      <UserAvatar user={user} size="sm" />
+                      <div className="font-medium text-gray-900">{user.name}</div>
+                    </div>
                   </td>
                   <td className="py-4 px-6">
                     <div className="text-sm text-gray-500">{user.email}</div>
@@ -160,8 +164,17 @@ export default function AdminDashboard() {
                       {user.role === 'admin' ? (
                         <button
                           onClick={() => handleRoleChange(user._id, user.role)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg text-sm font-medium transition-colors"
-                          title="Hạ cấp xuống User"
+                          disabled={currentUser && (currentUser._id === user._id || currentUser.id === user._id)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-sm font-medium transition-colors ${
+                            currentUser && (currentUser._id === user._id || currentUser.id === user._id)
+                              ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
+                              : 'border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100'
+                          }`}
+                          title={
+                            currentUser && (currentUser._id === user._id || currentUser.id === user._id)
+                              ? 'Không thể tự hạ quyền của chính mình'
+                              : 'Hạ cấp xuống User'
+                          }
                         >
                           <ShieldOff size={14} />
                           Hạ cấp User

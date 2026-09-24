@@ -4,8 +4,15 @@ import { useEffect, useRef } from 'react';
 
 export default function AdminRoute() {
   const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  const userRaw = localStorage.getItem('user') || sessionStorage.getItem('user');
-  const user = userRaw ? JSON.parse(userRaw) : null;
+  const getUser = () => {
+    try {
+      const userRaw = localStorage.getItem('user') || sessionStorage.getItem('user');
+      return userRaw ? JSON.parse(userRaw) : null;
+    } catch {
+      return null;
+    }
+  };
+  const user = getUser();
   const warnedRef = useRef(false);
 
   useEffect(() => {
