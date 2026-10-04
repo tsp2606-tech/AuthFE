@@ -16,7 +16,7 @@ export default defineConfig({
     proxy: {
       //proxy all requests starting with /api to backend server
       '/api': {
-        target: 'https://authapi-oimn.onrender.com/',
+        target: process.env.VITE_BACKEND_TARGET || 'http://localhost:3001',
         changeOrigin: true,
         secure: false,
       }
