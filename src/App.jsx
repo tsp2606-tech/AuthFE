@@ -27,6 +27,7 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route element={<AdminRoute />}>
                 <Route path="admin" element={<AdminDashboard />} />
+                <Route path="admin/dashboard" element={<AdminDashboard />} />
               </Route>
             </Route>
           </Route>
